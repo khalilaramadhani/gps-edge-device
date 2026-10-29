@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS Edge Device</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f3f6fa;
+      color: #222;
+    }
+
+    .dashboard {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+    }
+
+    h1 {
+      color: #2457a7;
+    }
+
+    .data {
+      padding: 12px;
+      margin: 10px 0;
+      background: #f0f4fa;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    button {
+      padding: 12px 16px;
+      margin: 5px 3px 5px 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #startBtn {
+      background: #2457a7;
+      color: white;
+    }
+
+    #stopBtn {
+      background: #ddd;
+      color: #222;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <h1>GPS Edge Device</h1>
+    <p>Dashboard pemantauan lokasi HP</p>
+
+    <p id="status">Status: Belum dimulai</p>
+
+    <button id="startBtn" onclick="startGPS()">
+      Mulai GPS
+    </button>
+
+    <button id="stopBtn" onclick="stopGPS()">
+      Berhenti
+    </button>
+
+    <div class="data">
+      <strong>Latitude:</strong>
+      <span id="latitude">-</span>
+    </div>
+
+    <div class="data">
+      <strong>Longitude:</strong>
+      <span id="longitude">-</span>
+    </div>
+
+    <div class="data">
+      <strong>Akurasi:</strong>
+      <span id="accuracy">-</span>
+    </div>
+
+    <div class="data">
+      <strong>Waktu pembacaan:</strong>
+      <span id="timestamp">-</span>
+    </div>
+
+    <p>
+      <a id="mapLink" href="#" target="_blank"
+         rel="noopener noreferrer">
+        Buka lokasi di Google Maps
+      </a>
+    </p>
+  </div>
+
+  <script>
+    let watchID = null;
+
+    function startGPS() {
+      if (!("geolocation" in navigator)) {
+        document.getElementById("status").textContent =
+          "Status: Browser tidak mendukung lokasi.";
+        return;
+      }
+
+      if (watchID !== null) {
+        return;
+      }
+
+      document.getElementById("status").textContent =
+        "Status: Meminta izin lokasi...";
+
+      watchID = navigator.geolocation.watchPosition(
+        function (position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const acc = position.coords.accuracy;
+
+          document.getElementById("latitude").textContent =
+            lat.toFixed(6);
+
+          document.getElementById("longitude").textContent =
+            lon.toFixed(6);
+
+          document.getElementById("accuracy").textContent =
+            acc.toFixed(2) + " meter";
+
+          document.getElementById("timestamp").textContent =
+            new Date(position.timestamp).toLocaleString("id-ID");
+
+          document.getElementById("status").textContent =
+            "Status: Lokasi berhasil dibaca";
+
+          document.getElementById("mapLink").href =
+            "https://www.google.com/maps?q=" + lat + "," + lon;
+        },
+
+        function (error) {
+          const messages = {
+            1: "Izin lokasi ditolak.",
+            2: "Lokasi tidak tersedia.",
+            3: "Waktu pengambilan lokasi habis."
+          };
+
+          document.getElementById("status").textContent =
+            "Status: " +
+            (messages[error.code] || "Terjadi kesalahan.");
+
+          if (watchID !== null) {
+            navigator.geolocation.clearWatch(watchID);
+            watchID = null;
+          }
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 20000
+        }
+      );
+    }
+
+    function stopGPS() {
+      if (watchID !== null) {
+        navigator.geolocation.clearWatch(watchID);
+        watchID = null;
+      }
+
+      document.getElementById("status").textContent =
+        "Status: Pemantauan dihentikan";
+    }
+  </script>
+</body>
+</html>
